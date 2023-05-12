@@ -7,6 +7,9 @@ class App {
       view: MainView,
     },
   ];
+  appState = {
+    favorites: [],
+  };
 
   constructor() {
     window.addEventListener("hashchange", this.route.bind(this));
@@ -19,7 +22,7 @@ class App {
     }
 
     const View = this.routes.find((r) => r.path === location.hash).view;
-    this.currentView = new View();
+    this.currentView = new View(this.appState);
     this.currentView.render();
   }
 }

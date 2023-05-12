@@ -1,10 +1,24 @@
 import { AbstractView } from "../../common/view.js";
+import onChange from "on-change";
 
 export class MainView extends AbstractView {
-  constructor() {
+  state = {
+    list: [],
+    loading: false,
+    searchQuery: undefined,
+    offset: 0,
+  };
+
+  constructor(appState) {
     super();
 
+    this.appState = appState;
+    this.appState = onChange(this.appState, this.appStateHook().bind(this));
     this.setTitle("Book search");
+  }
+
+  appStateHook(path) {
+    if (path === "favorites") console.log("favorites");
   }
 
   render() {
