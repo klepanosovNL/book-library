@@ -17,13 +17,12 @@ export class CardList extends DivComponent {
       return this.el;
     }
 
-    this.el.classList.add("card_list");
-    this.el.innerHTML = `
-        <h1>We found ${this.parentState.numFound} books <h1>
-    `;
+    const cardsContainer = document.createElement("div");
+    cardsContainer.classList.add("card__container");
+    this.el.append(cardsContainer);
 
     for (const card of this.parentState.list) {
-      this.el.append(new Card(this.appState, card).render());
+      cardsContainer.append(new Card(this.appState, card).render());
     }
 
     return this.el;

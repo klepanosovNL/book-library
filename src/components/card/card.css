@@ -3,15 +3,21 @@
     flex-direction: column;
     border-radius: 8px;
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 .card__image {
     background: #b8b8b8;
     display: flex;
-    padding-top: 10px;
     justify-content: center;
     align-items: center;
     height: 180px;
+    padding: 50px;
+}
+
+.card__image img {
+    height: 250px;
+    margin: 0;
 }
 
 .card__info {

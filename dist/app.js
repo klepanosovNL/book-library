@@ -1,5 +1,5 @@
 (function () {
-  "use strict";
+  'use strict';
 
   class AbstractView {
     constructor() {
@@ -10,1057 +10,1011 @@
       document.title = title;
     }
 
-    render() {}
+    render() {
 
-    destroy() {}
+    }
+
+    destroy() {
+
+    }
   }
 
-  const PATH_SEPARATOR = ".";
-  const TARGET = Symbol("target");
-  const UNSUBSCRIBE = Symbol("unsubscribe");
+  const PATH_SEPARATOR = '.';
+  const TARGET = Symbol('target');
+  const UNSUBSCRIBE = Symbol('unsubscribe');
 
   function isBuiltinWithMutableMethods(value) {
-    return (
-      value instanceof Date ||
-      value instanceof Set ||
-      value instanceof Map ||
-      value instanceof WeakSet ||
-      value instanceof WeakMap ||
-      ArrayBuffer.isView(value)
-    );
+  	return value instanceof Date
+  		|| value instanceof Set
+  		|| value instanceof Map
+  		|| value instanceof WeakSet
+  		|| value instanceof WeakMap
+  		|| ArrayBuffer.isView(value);
   }
 
   function isBuiltinWithoutMutableMethods(value) {
-    return (
-      (typeof value === "object"
-        ? value === null
-        : typeof value !== "function") || value instanceof RegExp
-    );
+  	return (typeof value === 'object' ? value === null : typeof value !== 'function') || value instanceof RegExp;
   }
 
   var isArray = Array.isArray;
 
   function isSymbol(value) {
-    return typeof value === "symbol";
+  	return typeof value === 'symbol';
   }
 
   const path = {
-    after: (path, subPath) => {
-      if (isArray(path)) {
-        return path.slice(subPath.length);
-      }
+  	after: (path, subPath) => {
+  		if (isArray(path)) {
+  			return path.slice(subPath.length);
+  		}
 
-      if (subPath === "") {
-        return path;
-      }
+  		if (subPath === '') {
+  			return path;
+  		}
 
-      return path.slice(subPath.length + 1);
-    },
-    concat: (path, key) => {
-      if (isArray(path)) {
-        path = [...path];
+  		return path.slice(subPath.length + 1);
+  	},
+  	concat: (path, key) => {
+  		if (isArray(path)) {
+  			path = [...path];
 
-        if (key) {
-          path.push(key);
-        }
+  			if (key) {
+  				path.push(key);
+  			}
 
-        return path;
-      }
+  			return path;
+  		}
 
-      if (key && key.toString !== undefined) {
-        if (path !== "") {
-          path += PATH_SEPARATOR;
-        }
+  		if (key && key.toString !== undefined) {
+  			if (path !== '') {
+  				path += PATH_SEPARATOR;
+  			}
 
-        if (isSymbol(key)) {
-          return path + key.toString();
-        }
+  			if (isSymbol(key)) {
+  				return path + key.toString();
+  			}
 
-        return path + key;
-      }
+  			return path + key;
+  		}
 
-      return path;
-    },
-    initial: (path) => {
-      if (isArray(path)) {
-        return path.slice(0, -1);
-      }
+  		return path;
+  	},
+  	initial: path => {
+  		if (isArray(path)) {
+  			return path.slice(0, -1);
+  		}
 
-      if (path === "") {
-        return path;
-      }
+  		if (path === '') {
+  			return path;
+  		}
 
-      const index = path.lastIndexOf(PATH_SEPARATOR);
+  		const index = path.lastIndexOf(PATH_SEPARATOR);
 
-      if (index === -1) {
-        return "";
-      }
+  		if (index === -1) {
+  			return '';
+  		}
 
-      return path.slice(0, index);
-    },
-    last: (path) => {
-      if (isArray(path)) {
-        return path[path.length - 1] || "";
-      }
+  		return path.slice(0, index);
+  	},
+  	last: path => {
+  		if (isArray(path)) {
+  			return path[path.length - 1] || '';
+  		}
 
-      if (path === "") {
-        return path;
-      }
+  		if (path === '') {
+  			return path;
+  		}
 
-      const index = path.lastIndexOf(PATH_SEPARATOR);
+  		const index = path.lastIndexOf(PATH_SEPARATOR);
 
-      if (index === -1) {
-        return path;
-      }
+  		if (index === -1) {
+  			return path;
+  		}
 
-      return path.slice(index + 1);
-    },
-    walk: (path, callback) => {
-      if (isArray(path)) {
-        for (const key of path) {
-          callback(key);
-        }
-      } else if (path !== "") {
-        let position = 0;
-        let index = path.indexOf(PATH_SEPARATOR);
+  		return path.slice(index + 1);
+  	},
+  	walk: (path, callback) => {
+  		if (isArray(path)) {
+  			for (const key of path) {
+  				callback(key);
+  			}
+  		} else if (path !== '') {
+  			let position = 0;
+  			let index = path.indexOf(PATH_SEPARATOR);
 
-        if (index === -1) {
-          callback(path);
-        } else {
-          while (position < path.length) {
-            if (index === -1) {
-              index = path.length;
-            }
+  			if (index === -1) {
+  				callback(path);
+  			} else {
+  				while (position < path.length) {
+  					if (index === -1) {
+  						index = path.length;
+  					}
 
-            callback(path.slice(position, index));
+  					callback(path.slice(position, index));
 
-            position = index + 1;
-            index = path.indexOf(PATH_SEPARATOR, position);
-          }
-        }
-      }
-    },
-    get(object, path) {
-      this.walk(path, (key) => {
-        if (object) {
-          object = object[key];
-        }
-      });
+  					position = index + 1;
+  					index = path.indexOf(PATH_SEPARATOR, position);
+  				}
+  			}
+  		}
+  	},
+  	get(object, path) {
+  		this.walk(path, key => {
+  			if (object) {
+  				object = object[key];
+  			}
+  		});
 
-      return object;
-    },
+  		return object;
+  	},
   };
 
   function isIterator(value) {
-    return typeof value === "object" && typeof value.next === "function";
+  	return typeof value === 'object' && typeof value.next === 'function';
   }
 
   // eslint-disable-next-line max-params
   function wrapIterator(iterator, target, thisArg, applyPath, prepareValue) {
-    const originalNext = iterator.next;
+  	const originalNext = iterator.next;
 
-    if (target.name === "entries") {
-      iterator.next = function () {
-        const result = originalNext.call(this);
+  	if (target.name === 'entries') {
+  		iterator.next = function () {
+  			const result = originalNext.call(this);
 
-        if (result.done === false) {
-          result.value[0] = prepareValue(
-            result.value[0],
-            target,
-            result.value[0],
-            applyPath
-          );
-          result.value[1] = prepareValue(
-            result.value[1],
-            target,
-            result.value[0],
-            applyPath
-          );
-        }
+  			if (result.done === false) {
+  				result.value[0] = prepareValue(
+  					result.value[0],
+  					target,
+  					result.value[0],
+  					applyPath,
+  				);
+  				result.value[1] = prepareValue(
+  					result.value[1],
+  					target,
+  					result.value[0],
+  					applyPath,
+  				);
+  			}
 
-        return result;
-      };
-    } else if (target.name === "values") {
-      const keyIterator = thisArg[TARGET].keys();
+  			return result;
+  		};
+  	} else if (target.name === 'values') {
+  		const keyIterator = thisArg[TARGET].keys();
 
-      iterator.next = function () {
-        const result = originalNext.call(this);
+  		iterator.next = function () {
+  			const result = originalNext.call(this);
 
-        if (result.done === false) {
-          result.value = prepareValue(
-            result.value,
-            target,
-            keyIterator.next().value,
-            applyPath
-          );
-        }
+  			if (result.done === false) {
+  				result.value = prepareValue(
+  					result.value,
+  					target,
+  					keyIterator.next().value,
+  					applyPath,
+  				);
+  			}
 
-        return result;
-      };
-    } else {
-      iterator.next = function () {
-        const result = originalNext.call(this);
+  			return result;
+  		};
+  	} else {
+  		iterator.next = function () {
+  			const result = originalNext.call(this);
 
-        if (result.done === false) {
-          result.value = prepareValue(
-            result.value,
-            target,
-            result.value,
-            applyPath
-          );
-        }
+  			if (result.done === false) {
+  				result.value = prepareValue(
+  					result.value,
+  					target,
+  					result.value,
+  					applyPath,
+  				);
+  			}
 
-        return result;
-      };
-    }
+  			return result;
+  		};
+  	}
 
-    return iterator;
+  	return iterator;
   }
 
   function ignoreProperty(cache, options, property) {
-    return (
-      cache.isUnsubscribed ||
-      (options.ignoreSymbols && isSymbol(property)) ||
-      (options.ignoreUnderscores && property.charAt(0) === "_") ||
-      ("ignoreKeys" in options && options.ignoreKeys.includes(property))
-    );
+  	return cache.isUnsubscribed
+  		|| (options.ignoreSymbols && isSymbol(property))
+  		|| (options.ignoreUnderscores && property.charAt(0) === '_')
+  		|| ('ignoreKeys' in options && options.ignoreKeys.includes(property));
   }
 
   /**
-     @class Cache
-     @private
-     */
+  @class Cache
+  @private
+  */
   class Cache {
-    constructor(equals) {
-      this._equals = equals;
-      this._proxyCache = new WeakMap();
-      this._pathCache = new WeakMap();
-      this.isUnsubscribed = false;
-    }
+  	constructor(equals) {
+  		this._equals = equals;
+  		this._proxyCache = new WeakMap();
+  		this._pathCache = new WeakMap();
+  		this.isUnsubscribed = false;
+  	}
 
-    _getDescriptorCache() {
-      if (this._descriptorCache === undefined) {
-        this._descriptorCache = new WeakMap();
-      }
+  	_getDescriptorCache() {
+  		if (this._descriptorCache === undefined) {
+  			this._descriptorCache = new WeakMap();
+  		}
 
-      return this._descriptorCache;
-    }
+  		return this._descriptorCache;
+  	}
 
-    _getProperties(target) {
-      const descriptorCache = this._getDescriptorCache();
-      let properties = descriptorCache.get(target);
+  	_getProperties(target) {
+  		const descriptorCache = this._getDescriptorCache();
+  		let properties = descriptorCache.get(target);
 
-      if (properties === undefined) {
-        properties = {};
-        descriptorCache.set(target, properties);
-      }
+  		if (properties === undefined) {
+  			properties = {};
+  			descriptorCache.set(target, properties);
+  		}
 
-      return properties;
-    }
+  		return properties;
+  	}
 
-    _getOwnPropertyDescriptor(target, property) {
-      if (this.isUnsubscribed) {
-        return Reflect.getOwnPropertyDescriptor(target, property);
-      }
+  	_getOwnPropertyDescriptor(target, property) {
+  		if (this.isUnsubscribed) {
+  			return Reflect.getOwnPropertyDescriptor(target, property);
+  		}
 
-      const properties = this._getProperties(target);
-      let descriptor = properties[property];
+  		const properties = this._getProperties(target);
+  		let descriptor = properties[property];
 
-      if (descriptor === undefined) {
-        descriptor = Reflect.getOwnPropertyDescriptor(target, property);
-        properties[property] = descriptor;
-      }
+  		if (descriptor === undefined) {
+  			descriptor = Reflect.getOwnPropertyDescriptor(target, property);
+  			properties[property] = descriptor;
+  		}
 
-      return descriptor;
-    }
+  		return descriptor;
+  	}
 
-    getProxy(target, path, handler, proxyTarget) {
-      if (this.isUnsubscribed) {
-        return target;
-      }
+  	getProxy(target, path, handler, proxyTarget) {
+  		if (this.isUnsubscribed) {
+  			return target;
+  		}
 
-      const reflectTarget = target[proxyTarget];
-      const source = reflectTarget || target;
+  		const reflectTarget = target[proxyTarget];
+  		const source = reflectTarget || target;
 
-      this._pathCache.set(source, path);
+  		this._pathCache.set(source, path);
 
-      let proxy = this._proxyCache.get(source);
+  		let proxy = this._proxyCache.get(source);
 
-      if (proxy === undefined) {
-        proxy =
-          reflectTarget === undefined ? new Proxy(target, handler) : target;
+  		if (proxy === undefined) {
+  			proxy = reflectTarget === undefined
+  				? new Proxy(target, handler)
+  				: target;
 
-        this._proxyCache.set(source, proxy);
-      }
+  			this._proxyCache.set(source, proxy);
+  		}
 
-      return proxy;
-    }
+  		return proxy;
+  	}
 
-    getPath(target) {
-      return this.isUnsubscribed ? undefined : this._pathCache.get(target);
-    }
+  	getPath(target) {
+  		return this.isUnsubscribed ? undefined : this._pathCache.get(target);
+  	}
 
-    isDetached(target, object) {
-      return !Object.is(target, path.get(object, this.getPath(target)));
-    }
+  	isDetached(target, object) {
+  		return !Object.is(target, path.get(object, this.getPath(target)));
+  	}
 
-    defineProperty(target, property, descriptor) {
-      if (!Reflect.defineProperty(target, property, descriptor)) {
-        return false;
-      }
+  	defineProperty(target, property, descriptor) {
+  		if (!Reflect.defineProperty(target, property, descriptor)) {
+  			return false;
+  		}
 
-      if (!this.isUnsubscribed) {
-        this._getProperties(target)[property] = descriptor;
-      }
+  		if (!this.isUnsubscribed) {
+  			this._getProperties(target)[property] = descriptor;
+  		}
 
-      return true;
-    }
+  		return true;
+  	}
 
-    setProperty(target, property, value, receiver, previous) {
-      // eslint-disable-line max-params
-      if (!this._equals(previous, value) || !(property in target)) {
-        const descriptor = this._getOwnPropertyDescriptor(target, property);
+  	setProperty(target, property, value, receiver, previous) { // eslint-disable-line max-params
+  		if (!this._equals(previous, value) || !(property in target)) {
+  			const descriptor = this._getOwnPropertyDescriptor(target, property);
 
-        if (descriptor !== undefined && "set" in descriptor) {
-          return Reflect.set(target, property, value, receiver);
-        }
+  			if (descriptor !== undefined && 'set' in descriptor) {
+  				return Reflect.set(target, property, value, receiver);
+  			}
 
-        return Reflect.set(target, property, value);
-      }
+  			return Reflect.set(target, property, value);
+  		}
 
-      return true;
-    }
+  		return true;
+  	}
 
-    deleteProperty(target, property, previous) {
-      if (Reflect.deleteProperty(target, property)) {
-        if (!this.isUnsubscribed) {
-          const properties = this._getDescriptorCache().get(target);
+  	deleteProperty(target, property, previous) {
+  		if (Reflect.deleteProperty(target, property)) {
+  			if (!this.isUnsubscribed) {
+  				const properties = this._getDescriptorCache().get(target);
 
-          if (properties) {
-            delete properties[property];
-            this._pathCache.delete(previous);
-          }
-        }
+  				if (properties) {
+  					delete properties[property];
+  					this._pathCache.delete(previous);
+  				}
+  			}
 
-        return true;
-      }
+  			return true;
+  		}
 
-      return false;
-    }
+  		return false;
+  	}
 
-    isSameDescriptor(a, target, property) {
-      const b = this._getOwnPropertyDescriptor(target, property);
+  	isSameDescriptor(a, target, property) {
+  		const b = this._getOwnPropertyDescriptor(target, property);
 
-      return (
-        a !== undefined &&
-        b !== undefined &&
-        Object.is(a.value, b.value) &&
-        (a.writable || false) === (b.writable || false) &&
-        (a.enumerable || false) === (b.enumerable || false) &&
-        (a.configurable || false) === (b.configurable || false) &&
-        a.get === b.get &&
-        a.set === b.set
-      );
-    }
+  		return a !== undefined
+  			&& b !== undefined
+  			&& Object.is(a.value, b.value)
+  			&& (a.writable || false) === (b.writable || false)
+  			&& (a.enumerable || false) === (b.enumerable || false)
+  			&& (a.configurable || false) === (b.configurable || false)
+  			&& a.get === b.get
+  			&& a.set === b.set;
+  	}
 
-    isGetInvariant(target, property) {
-      const descriptor = this._getOwnPropertyDescriptor(target, property);
+  	isGetInvariant(target, property) {
+  		const descriptor = this._getOwnPropertyDescriptor(target, property);
 
-      return (
-        descriptor !== undefined &&
-        descriptor.configurable !== true &&
-        descriptor.writable !== true
-      );
-    }
+  		return descriptor !== undefined
+  			&& descriptor.configurable !== true
+  			&& descriptor.writable !== true;
+  	}
 
-    unsubscribe() {
-      this._descriptorCache = null;
-      this._pathCache = null;
-      this._proxyCache = null;
-      this.isUnsubscribed = true;
-    }
+  	unsubscribe() {
+  		this._descriptorCache = null;
+  		this._pathCache = null;
+  		this._proxyCache = null;
+  		this.isUnsubscribed = true;
+  	}
   }
 
   function isObject(value) {
-    return toString.call(value) === "[object Object]";
+  	return toString.call(value) === '[object Object]';
   }
 
   function isDiffCertain() {
-    return true;
+  	return true;
   }
 
   function isDiffArrays(clone, value) {
-    return (
-      clone.length !== value.length ||
-      clone.some((item, index) => value[index] !== item)
-    );
+  	return clone.length !== value.length || clone.some((item, index) => value[index] !== item);
   }
 
   const IMMUTABLE_OBJECT_METHODS = new Set([
-    "hasOwnProperty",
-    "isPrototypeOf",
-    "propertyIsEnumerable",
-    "toLocaleString",
-    "toString",
-    "valueOf",
+  	'hasOwnProperty',
+  	'isPrototypeOf',
+  	'propertyIsEnumerable',
+  	'toLocaleString',
+  	'toString',
+  	'valueOf',
   ]);
 
   const IMMUTABLE_ARRAY_METHODS = new Set([
-    "concat",
-    "includes",
-    "indexOf",
-    "join",
-    "keys",
-    "lastIndexOf",
+  	'concat',
+  	'includes',
+  	'indexOf',
+  	'join',
+  	'keys',
+  	'lastIndexOf',
   ]);
 
   const MUTABLE_ARRAY_METHODS = {
-    push: isDiffCertain,
-    pop: isDiffCertain,
-    shift: isDiffCertain,
-    unshift: isDiffCertain,
-    copyWithin: isDiffArrays,
-    reverse: isDiffArrays,
-    sort: isDiffArrays,
-    splice: isDiffArrays,
-    flat: isDiffArrays,
-    fill: isDiffArrays,
+  	push: isDiffCertain,
+  	pop: isDiffCertain,
+  	shift: isDiffCertain,
+  	unshift: isDiffCertain,
+  	copyWithin: isDiffArrays,
+  	reverse: isDiffArrays,
+  	sort: isDiffArrays,
+  	splice: isDiffArrays,
+  	flat: isDiffArrays,
+  	fill: isDiffArrays,
   };
 
   const HANDLED_ARRAY_METHODS = new Set([
-    ...IMMUTABLE_OBJECT_METHODS,
-    ...IMMUTABLE_ARRAY_METHODS,
-    ...Object.keys(MUTABLE_ARRAY_METHODS),
+  	...IMMUTABLE_OBJECT_METHODS,
+  	...IMMUTABLE_ARRAY_METHODS,
+  	...Object.keys(MUTABLE_ARRAY_METHODS),
   ]);
 
   function isDiffSets(clone, value) {
-    if (clone.size !== value.size) {
-      return true;
-    }
+  	if (clone.size !== value.size) {
+  		return true;
+  	}
 
-    for (const element of clone) {
-      if (!value.has(element)) {
-        return true;
-      }
-    }
+  	for (const element of clone) {
+  		if (!value.has(element)) {
+  			return true;
+  		}
+  	}
 
-    return false;
+  	return false;
   }
 
-  const COLLECTION_ITERATOR_METHODS = ["keys", "values", "entries"];
+  const COLLECTION_ITERATOR_METHODS = [
+  	'keys',
+  	'values',
+  	'entries',
+  ];
 
-  const IMMUTABLE_SET_METHODS = new Set(["has", "toString"]);
+  const IMMUTABLE_SET_METHODS = new Set([
+  	'has',
+  	'toString',
+  ]);
 
   const MUTABLE_SET_METHODS = {
-    add: isDiffSets,
-    clear: isDiffSets,
-    delete: isDiffSets,
-    forEach: isDiffSets,
+  	add: isDiffSets,
+  	clear: isDiffSets,
+  	delete: isDiffSets,
+  	forEach: isDiffSets,
   };
 
   const HANDLED_SET_METHODS = new Set([
-    ...IMMUTABLE_SET_METHODS,
-    ...Object.keys(MUTABLE_SET_METHODS),
-    ...COLLECTION_ITERATOR_METHODS,
+  	...IMMUTABLE_SET_METHODS,
+  	...Object.keys(MUTABLE_SET_METHODS),
+  	...COLLECTION_ITERATOR_METHODS,
   ]);
 
   function isDiffMaps(clone, value) {
-    if (clone.size !== value.size) {
-      return true;
-    }
+  	if (clone.size !== value.size) {
+  		return true;
+  	}
 
-    let bValue;
-    for (const [key, aValue] of clone) {
-      bValue = value.get(key);
+  	let bValue;
+  	for (const [key, aValue] of clone) {
+  		bValue = value.get(key);
 
-      if (bValue !== aValue || (bValue === undefined && !value.has(key))) {
-        return true;
-      }
-    }
+  		if (bValue !== aValue || (bValue === undefined && !value.has(key))) {
+  			return true;
+  		}
+  	}
 
-    return false;
+  	return false;
   }
 
-  const IMMUTABLE_MAP_METHODS = new Set([...IMMUTABLE_SET_METHODS, "get"]);
+  const IMMUTABLE_MAP_METHODS = new Set([...IMMUTABLE_SET_METHODS, 'get']);
 
   const MUTABLE_MAP_METHODS = {
-    set: isDiffMaps,
-    clear: isDiffMaps,
-    delete: isDiffMaps,
-    forEach: isDiffMaps,
+  	set: isDiffMaps,
+  	clear: isDiffMaps,
+  	delete: isDiffMaps,
+  	forEach: isDiffMaps,
   };
 
   const HANDLED_MAP_METHODS = new Set([
-    ...IMMUTABLE_MAP_METHODS,
-    ...Object.keys(MUTABLE_MAP_METHODS),
-    ...COLLECTION_ITERATOR_METHODS,
+  	...IMMUTABLE_MAP_METHODS,
+  	...Object.keys(MUTABLE_MAP_METHODS),
+  	...COLLECTION_ITERATOR_METHODS,
   ]);
 
   class CloneObject {
-    constructor(value, path, argumentsList, hasOnValidate) {
-      this._path = path;
-      this._isChanged = false;
-      this._clonedCache = new Set();
-      this._hasOnValidate = hasOnValidate;
-      this._changes = hasOnValidate ? [] : null;
+  	constructor(value, path, argumentsList, hasOnValidate) {
+  		this._path = path;
+  		this._isChanged = false;
+  		this._clonedCache = new Set();
+  		this._hasOnValidate = hasOnValidate;
+  		this._changes = hasOnValidate ? [] : null;
 
-      this.clone = path === undefined ? value : this._shallowClone(value);
-    }
+  		this.clone = path === undefined ? value : this._shallowClone(value);
+  	}
 
-    static isHandledMethod(name) {
-      return IMMUTABLE_OBJECT_METHODS.has(name);
-    }
+  	static isHandledMethod(name) {
+  		return IMMUTABLE_OBJECT_METHODS.has(name);
+  	}
 
-    _shallowClone(value) {
-      let clone = value;
+  	_shallowClone(value) {
+  		let clone = value;
 
-      if (isObject(value)) {
-        clone = { ...value };
-      } else if (isArray(value) || ArrayBuffer.isView(value)) {
-        clone = [...value];
-      } else if (value instanceof Date) {
-        clone = new Date(value);
-      } else if (value instanceof Set) {
-        clone = new Set([...value].map((item) => this._shallowClone(item)));
-      } else if (value instanceof Map) {
-        clone = new Map();
+  		if (isObject(value)) {
+  			clone = {...value};
+  		} else if (isArray(value) || ArrayBuffer.isView(value)) {
+  			clone = [...value];
+  		} else if (value instanceof Date) {
+  			clone = new Date(value);
+  		} else if (value instanceof Set) {
+  			clone = new Set([...value].map(item => this._shallowClone(item)));
+  		} else if (value instanceof Map) {
+  			clone = new Map();
 
-        for (const [key, item] of value.entries()) {
-          clone.set(key, this._shallowClone(item));
-        }
-      }
+  			for (const [key, item] of value.entries()) {
+  				clone.set(key, this._shallowClone(item));
+  			}
+  		}
 
-      this._clonedCache.add(clone);
+  		this._clonedCache.add(clone);
 
-      return clone;
-    }
+  		return clone;
+  	}
 
-    preferredThisArg(isHandledMethod, name, thisArg, thisProxyTarget) {
-      if (isHandledMethod) {
-        if (isArray(thisProxyTarget)) {
-          this._onIsChanged = MUTABLE_ARRAY_METHODS[name];
-        } else if (thisProxyTarget instanceof Set) {
-          this._onIsChanged = MUTABLE_SET_METHODS[name];
-        } else if (thisProxyTarget instanceof Map) {
-          this._onIsChanged = MUTABLE_MAP_METHODS[name];
-        }
+  	preferredThisArg(isHandledMethod, name, thisArg, thisProxyTarget) {
+  		if (isHandledMethod) {
+  			if (isArray(thisProxyTarget)) {
+  				this._onIsChanged = MUTABLE_ARRAY_METHODS[name];
+  			} else if (thisProxyTarget instanceof Set) {
+  				this._onIsChanged = MUTABLE_SET_METHODS[name];
+  			} else if (thisProxyTarget instanceof Map) {
+  				this._onIsChanged = MUTABLE_MAP_METHODS[name];
+  			}
 
-        return thisProxyTarget;
-      }
+  			return thisProxyTarget;
+  		}
 
-      return thisArg;
-    }
+  		return thisArg;
+  	}
 
-    update(fullPath, property, value) {
-      const changePath = path.after(fullPath, this._path);
+  	update(fullPath, property, value) {
+  		const changePath = path.after(fullPath, this._path);
 
-      if (property !== "length") {
-        let object = this.clone;
+  		if (property !== 'length') {
+  			let object = this.clone;
 
-        path.walk(changePath, (key) => {
-          if (object && object[key]) {
-            if (!this._clonedCache.has(object[key])) {
-              object[key] = this._shallowClone(object[key]);
-            }
+  			path.walk(changePath, key => {
+  				if (object && object[key]) {
+  					if (!this._clonedCache.has(object[key])) {
+  						object[key] = this._shallowClone(object[key]);
+  					}
 
-            object = object[key];
-          }
-        });
+  					object = object[key];
+  				}
+  			});
 
-        if (this._hasOnValidate) {
-          this._changes.push({
-            path: changePath,
-            property,
-            previous: value,
-          });
-        }
+  			if (this._hasOnValidate) {
+  				this._changes.push({
+  					path: changePath,
+  					property,
+  					previous: value,
+  				});
+  			}
 
-        if (object && object[property]) {
-          object[property] = value;
-        }
-      }
+  			if (object && object[property]) {
+  				object[property] = value;
+  			}
+  		}
 
-      this._isChanged = true;
-    }
+  		this._isChanged = true;
+  	}
 
-    undo(object) {
-      let change;
+  	undo(object) {
+  		let change;
 
-      for (let index = this._changes.length - 1; index !== -1; index--) {
-        change = this._changes[index];
+  		for (let index = this._changes.length - 1; index !== -1; index--) {
+  			change = this._changes[index];
 
-        path.get(object, change.path)[change.property] = change.previous;
-      }
-    }
+  			path.get(object, change.path)[change.property] = change.previous;
+  		}
+  	}
 
-    isChanged(value) {
-      return this._onIsChanged === undefined
-        ? this._isChanged
-        : this._onIsChanged(this.clone, value);
-    }
+  	isChanged(value) {
+  		return this._onIsChanged === undefined
+  			? this._isChanged
+  			: this._onIsChanged(this.clone, value);
+  	}
   }
 
   class CloneArray extends CloneObject {
-    static isHandledMethod(name) {
-      return HANDLED_ARRAY_METHODS.has(name);
-    }
+  	static isHandledMethod(name) {
+  		return HANDLED_ARRAY_METHODS.has(name);
+  	}
   }
 
   class CloneDate extends CloneObject {
-    undo(object) {
-      object.setTime(this.clone.getTime());
-    }
+  	undo(object) {
+  		object.setTime(this.clone.getTime());
+  	}
 
-    isChanged(value, equals) {
-      return !equals(this.clone.valueOf(), value.valueOf());
-    }
+  	isChanged(value, equals) {
+  		return !equals(this.clone.valueOf(), value.valueOf());
+  	}
   }
 
   class CloneSet extends CloneObject {
-    static isHandledMethod(name) {
-      return HANDLED_SET_METHODS.has(name);
-    }
+  	static isHandledMethod(name) {
+  		return HANDLED_SET_METHODS.has(name);
+  	}
 
-    undo(object) {
-      for (const value of this.clone) {
-        object.add(value);
-      }
+  	undo(object) {
+  		for (const value of this.clone) {
+  			object.add(value);
+  		}
 
-      for (const value of object) {
-        if (!this.clone.has(value)) {
-          object.delete(value);
-        }
-      }
-    }
+  		for (const value of object) {
+  			if (!this.clone.has(value)) {
+  				object.delete(value);
+  			}
+  		}
+  	}
   }
 
   class CloneMap extends CloneObject {
-    static isHandledMethod(name) {
-      return HANDLED_MAP_METHODS.has(name);
-    }
+  	static isHandledMethod(name) {
+  		return HANDLED_MAP_METHODS.has(name);
+  	}
 
-    undo(object) {
-      for (const [key, value] of this.clone.entries()) {
-        object.set(key, value);
-      }
+  	undo(object) {
+  		for (const [key, value] of this.clone.entries()) {
+  			object.set(key, value);
+  		}
 
-      for (const key of object.keys()) {
-        if (!this.clone.has(key)) {
-          object.delete(key);
-        }
-      }
-    }
+  		for (const key of object.keys()) {
+  			if (!this.clone.has(key)) {
+  				object.delete(key);
+  			}
+  		}
+  	}
   }
 
   class CloneWeakSet extends CloneObject {
-    constructor(value, path, argumentsList, hasOnValidate) {
-      super(undefined, path, argumentsList, hasOnValidate);
+  	constructor(value, path, argumentsList, hasOnValidate) {
+  		super(undefined, path, argumentsList, hasOnValidate);
 
-      this._arg1 = argumentsList[0];
-      this._weakValue = value.has(this._arg1);
-    }
+  		this._arg1 = argumentsList[0];
+  		this._weakValue = value.has(this._arg1);
+  	}
 
-    isChanged(value) {
-      return this._weakValue !== value.has(this._arg1);
-    }
+  	isChanged(value) {
+  		return this._weakValue !== value.has(this._arg1);
+  	}
 
-    undo(object) {
-      if (this._weakValue && !object.has(this._arg1)) {
-        object.add(this._arg1);
-      } else {
-        object.delete(this._arg1);
-      }
-    }
+  	undo(object) {
+  		if (this._weakValue && !object.has(this._arg1)) {
+  			object.add(this._arg1);
+  		} else {
+  			object.delete(this._arg1);
+  		}
+  	}
   }
 
   class CloneWeakMap extends CloneObject {
-    constructor(value, path, argumentsList, hasOnValidate) {
-      super(undefined, path, argumentsList, hasOnValidate);
+  	constructor(value, path, argumentsList, hasOnValidate) {
+  		super(undefined, path, argumentsList, hasOnValidate);
 
-      this._weakKey = argumentsList[0];
-      this._weakHas = value.has(this._weakKey);
-      this._weakValue = value.get(this._weakKey);
-    }
+  		this._weakKey = argumentsList[0];
+  		this._weakHas = value.has(this._weakKey);
+  		this._weakValue = value.get(this._weakKey);
+  	}
 
-    isChanged(value) {
-      return this._weakValue !== value.get(this._weakKey);
-    }
+  	isChanged(value) {
+  		return this._weakValue !== value.get(this._weakKey);
+  	}
 
-    undo(object) {
-      const weakHas = object.has(this._weakKey);
+  	undo(object) {
+  		const weakHas = object.has(this._weakKey);
 
-      if (this._weakHas && !weakHas) {
-        object.set(this._weakKey, this._weakValue);
-      } else if (!this._weakHas && weakHas) {
-        object.delete(this._weakKey);
-      } else if (this._weakValue !== object.get(this._weakKey)) {
-        object.set(this._weakKey, this._weakValue);
-      }
-    }
+  		if (this._weakHas && !weakHas) {
+  			object.set(this._weakKey, this._weakValue);
+  		} else if (!this._weakHas && weakHas) {
+  			object.delete(this._weakKey);
+  		} else if (this._weakValue !== object.get(this._weakKey)) {
+  			object.set(this._weakKey, this._weakValue);
+  		}
+  	}
   }
 
   class SmartClone {
-    constructor(hasOnValidate) {
-      this._stack = [];
-      this._hasOnValidate = hasOnValidate;
-    }
+  	constructor(hasOnValidate) {
+  		this._stack = [];
+  		this._hasOnValidate = hasOnValidate;
+  	}
 
-    static isHandledType(value) {
-      return (
-        isObject(value) || isArray(value) || isBuiltinWithMutableMethods(value)
-      );
-    }
+  	static isHandledType(value) {
+  		return isObject(value)
+  			|| isArray(value)
+  			|| isBuiltinWithMutableMethods(value);
+  	}
 
-    static isHandledMethod(target, name) {
-      if (isObject(target)) {
-        return CloneObject.isHandledMethod(name);
-      }
+  	static isHandledMethod(target, name) {
+  		if (isObject(target)) {
+  			return CloneObject.isHandledMethod(name);
+  		}
 
-      if (isArray(target)) {
-        return CloneArray.isHandledMethod(name);
-      }
+  		if (isArray(target)) {
+  			return CloneArray.isHandledMethod(name);
+  		}
 
-      if (target instanceof Set) {
-        return CloneSet.isHandledMethod(name);
-      }
+  		if (target instanceof Set) {
+  			return CloneSet.isHandledMethod(name);
+  		}
 
-      if (target instanceof Map) {
-        return CloneMap.isHandledMethod(name);
-      }
+  		if (target instanceof Map) {
+  			return CloneMap.isHandledMethod(name);
+  		}
 
-      return isBuiltinWithMutableMethods(target);
-    }
+  		return isBuiltinWithMutableMethods(target);
+  	}
 
-    get isCloning() {
-      return this._stack.length > 0;
-    }
+  	get isCloning() {
+  		return this._stack.length > 0;
+  	}
 
-    start(value, path, argumentsList) {
-      let CloneClass = CloneObject;
+  	start(value, path, argumentsList) {
+  		let CloneClass = CloneObject;
 
-      if (isArray(value)) {
-        CloneClass = CloneArray;
-      } else if (value instanceof Date) {
-        CloneClass = CloneDate;
-      } else if (value instanceof Set) {
-        CloneClass = CloneSet;
-      } else if (value instanceof Map) {
-        CloneClass = CloneMap;
-      } else if (value instanceof WeakSet) {
-        CloneClass = CloneWeakSet;
-      } else if (value instanceof WeakMap) {
-        CloneClass = CloneWeakMap;
-      }
+  		if (isArray(value)) {
+  			CloneClass = CloneArray;
+  		} else if (value instanceof Date) {
+  			CloneClass = CloneDate;
+  		} else if (value instanceof Set) {
+  			CloneClass = CloneSet;
+  		} else if (value instanceof Map) {
+  			CloneClass = CloneMap;
+  		} else if (value instanceof WeakSet) {
+  			CloneClass = CloneWeakSet;
+  		} else if (value instanceof WeakMap) {
+  			CloneClass = CloneWeakMap;
+  		}
 
-      this._stack.push(
-        new CloneClass(value, path, argumentsList, this._hasOnValidate)
-      );
-    }
+  		this._stack.push(new CloneClass(value, path, argumentsList, this._hasOnValidate));
+  	}
 
-    update(fullPath, property, value) {
-      this._stack[this._stack.length - 1].update(fullPath, property, value);
-    }
+  	update(fullPath, property, value) {
+  		this._stack[this._stack.length - 1].update(fullPath, property, value);
+  	}
 
-    preferredThisArg(target, thisArg, thisProxyTarget) {
-      const { name } = target;
-      const isHandledMethod = SmartClone.isHandledMethod(thisProxyTarget, name);
+  	preferredThisArg(target, thisArg, thisProxyTarget) {
+  		const {name} = target;
+  		const isHandledMethod = SmartClone.isHandledMethod(thisProxyTarget, name);
 
-      return this._stack[this._stack.length - 1].preferredThisArg(
-        isHandledMethod,
-        name,
-        thisArg,
-        thisProxyTarget
-      );
-    }
+  		return this._stack[this._stack.length - 1]
+  			.preferredThisArg(isHandledMethod, name, thisArg, thisProxyTarget);
+  	}
 
-    isChanged(isMutable, value, equals) {
-      return this._stack[this._stack.length - 1].isChanged(
-        isMutable,
-        value,
-        equals
-      );
-    }
+  	isChanged(isMutable, value, equals) {
+  		return this._stack[this._stack.length - 1].isChanged(isMutable, value, equals);
+  	}
 
-    undo(object) {
-      if (this._previousClone !== undefined) {
-        this._previousClone.undo(object);
-      }
-    }
+  	undo(object) {
+  		if (this._previousClone !== undefined) {
+  			this._previousClone.undo(object);
+  		}
+  	}
 
-    stop() {
-      this._previousClone = this._stack.pop();
+  	stop() {
+  		this._previousClone = this._stack.pop();
 
-      return this._previousClone.clone;
-    }
+  		return this._previousClone.clone;
+  	}
   }
 
   /* eslint-disable unicorn/prefer-spread */
 
   const defaultOptions = {
-    equals: Object.is,
-    isShallow: false,
-    pathAsArray: false,
-    ignoreSymbols: false,
-    ignoreUnderscores: false,
-    ignoreDetached: false,
-    details: false,
+  	equals: Object.is,
+  	isShallow: false,
+  	pathAsArray: false,
+  	ignoreSymbols: false,
+  	ignoreUnderscores: false,
+  	ignoreDetached: false,
+  	details: false,
   };
 
   const onChange = (object, onChange, options = {}) => {
-    options = {
-      ...defaultOptions,
-      ...options,
-    };
+  	options = {
+  		...defaultOptions,
+  		...options,
+  	};
 
-    const proxyTarget = Symbol("ProxyTarget");
-    const { equals, isShallow, ignoreDetached, details } = options;
-    const cache = new Cache(equals);
-    const hasOnValidate = typeof options.onValidate === "function";
-    const smartClone = new SmartClone(hasOnValidate);
+  	const proxyTarget = Symbol('ProxyTarget');
+  	const {equals, isShallow, ignoreDetached, details} = options;
+  	const cache = new Cache(equals);
+  	const hasOnValidate = typeof options.onValidate === 'function';
+  	const smartClone = new SmartClone(hasOnValidate);
 
-    // eslint-disable-next-line max-params
-    const validate = (target, property, value, previous, applyData) =>
-      !hasOnValidate ||
-      smartClone.isCloning ||
-      options.onValidate(
-        path.concat(cache.getPath(target), property),
-        value,
-        previous,
-        applyData
-      ) === true;
+  	// eslint-disable-next-line max-params
+  	const validate = (target, property, value, previous, applyData) => !hasOnValidate
+  		|| smartClone.isCloning
+  		|| options.onValidate(path.concat(cache.getPath(target), property), value, previous, applyData) === true;
 
-    const handleChangeOnTarget = (target, property, value, previous) => {
-      if (
-        !ignoreProperty(cache, options, property) &&
-        !(ignoreDetached && cache.isDetached(target, object))
-      ) {
-        handleChange(cache.getPath(target), property, value, previous);
-      }
-    };
+  	const handleChangeOnTarget = (target, property, value, previous) => {
+  		if (
+  			!ignoreProperty(cache, options, property)
+  			&& !(ignoreDetached && cache.isDetached(target, object))
+  		) {
+  			handleChange(cache.getPath(target), property, value, previous);
+  		}
+  	};
 
-    // eslint-disable-next-line max-params
-    const handleChange = (changePath, property, value, previous, applyData) => {
-      if (smartClone.isCloning) {
-        smartClone.update(changePath, property, previous);
-      } else {
-        onChange(path.concat(changePath, property), value, previous, applyData);
-      }
-    };
+  	// eslint-disable-next-line max-params
+  	const handleChange = (changePath, property, value, previous, applyData) => {
+  		if (smartClone.isCloning) {
+  			smartClone.update(changePath, property, previous);
+  		} else {
+  			onChange(path.concat(changePath, property), value, previous, applyData);
+  		}
+  	};
 
-    const getProxyTarget = (value) =>
-      value ? value[proxyTarget] || value : value;
+  	const getProxyTarget = value => value
+  		? (value[proxyTarget] || value)
+  		: value;
 
-    const prepareValue = (value, target, property, basePath) => {
-      if (
-        isBuiltinWithoutMutableMethods(value) ||
-        property === "constructor" ||
-        (isShallow && !SmartClone.isHandledMethod(target, property)) ||
-        ignoreProperty(cache, options, property) ||
-        cache.isGetInvariant(target, property) ||
-        (ignoreDetached && cache.isDetached(target, object))
-      ) {
-        return value;
-      }
+  	const prepareValue = (value, target, property, basePath) => {
+  		if (
+  			isBuiltinWithoutMutableMethods(value)
+  			|| property === 'constructor'
+  			|| (isShallow && !SmartClone.isHandledMethod(target, property))
+  			|| ignoreProperty(cache, options, property)
+  			|| cache.isGetInvariant(target, property)
+  			|| (ignoreDetached && cache.isDetached(target, object))
+  		) {
+  			return value;
+  		}
 
-      if (basePath === undefined) {
-        basePath = cache.getPath(target);
-      }
+  		if (basePath === undefined) {
+  			basePath = cache.getPath(target);
+  		}
 
-      return cache.getProxy(
-        value,
-        path.concat(basePath, property),
-        handler,
-        proxyTarget
-      );
-    };
+  		return cache.getProxy(value, path.concat(basePath, property), handler, proxyTarget);
+  	};
 
-    const handler = {
-      get(target, property, receiver) {
-        if (isSymbol(property)) {
-          if (property === proxyTarget || property === TARGET) {
-            return target;
-          }
+  	const handler = {
+  		get(target, property, receiver) {
+  			if (isSymbol(property)) {
+  				if (property === proxyTarget || property === TARGET) {
+  					return target;
+  				}
 
-          if (
-            property === UNSUBSCRIBE &&
-            !cache.isUnsubscribed &&
-            cache.getPath(target).length === 0
-          ) {
-            cache.unsubscribe();
-            return target;
-          }
-        }
+  				if (
+  					property === UNSUBSCRIBE
+  					&& !cache.isUnsubscribed
+  					&& cache.getPath(target).length === 0
+  				) {
+  					cache.unsubscribe();
+  					return target;
+  				}
+  			}
 
-        const value = isBuiltinWithMutableMethods(target)
-          ? Reflect.get(target, property)
-          : Reflect.get(target, property, receiver);
+  			const value = isBuiltinWithMutableMethods(target)
+  				? Reflect.get(target, property)
+  				: Reflect.get(target, property, receiver);
 
-        return prepareValue(value, target, property);
-      },
+  			return prepareValue(value, target, property);
+  		},
 
-      set(target, property, value, receiver) {
-        value = getProxyTarget(value);
+  		set(target, property, value, receiver) {
+  			value = getProxyTarget(value);
 
-        const reflectTarget = target[proxyTarget] || target;
-        const previous = reflectTarget[property];
+  			const reflectTarget = target[proxyTarget] || target;
+  			const previous = reflectTarget[property];
 
-        if (equals(previous, value) && property in target) {
-          return true;
-        }
+  			if (equals(previous, value) && property in target) {
+  				return true;
+  			}
 
-        const isValid = validate(target, property, value, previous);
+  			const isValid = validate(target, property, value, previous);
 
-        if (
-          isValid &&
-          cache.setProperty(reflectTarget, property, value, receiver, previous)
-        ) {
-          handleChangeOnTarget(target, property, target[property], previous);
+  			if (
+  				isValid
+  				&& cache.setProperty(reflectTarget, property, value, receiver, previous)
+  			) {
+  				handleChangeOnTarget(target, property, target[property], previous);
 
-          return true;
-        }
+  				return true;
+  			}
 
-        return !isValid;
-      },
+  			return !isValid;
+  		},
 
-      defineProperty(target, property, descriptor) {
-        if (!cache.isSameDescriptor(descriptor, target, property)) {
-          const previous = target[property];
+  		defineProperty(target, property, descriptor) {
+  			if (!cache.isSameDescriptor(descriptor, target, property)) {
+  				const previous = target[property];
 
-          if (
-            validate(target, property, descriptor.value, previous) &&
-            cache.defineProperty(target, property, descriptor, previous)
-          ) {
-            handleChangeOnTarget(target, property, descriptor.value, previous);
-          }
-        }
+  				if (
+  					validate(target, property, descriptor.value, previous)
+  					&& cache.defineProperty(target, property, descriptor, previous)
+  				) {
+  					handleChangeOnTarget(target, property, descriptor.value, previous);
+  				}
+  			}
 
-        return true;
-      },
+  			return true;
+  		},
 
-      deleteProperty(target, property) {
-        if (!Reflect.has(target, property)) {
-          return true;
-        }
+  		deleteProperty(target, property) {
+  			if (!Reflect.has(target, property)) {
+  				return true;
+  			}
 
-        const previous = Reflect.get(target, property);
-        const isValid = validate(target, property, undefined, previous);
+  			const previous = Reflect.get(target, property);
+  			const isValid = validate(target, property, undefined, previous);
 
-        if (isValid && cache.deleteProperty(target, property, previous)) {
-          handleChangeOnTarget(target, property, undefined, previous);
+  			if (
+  				isValid
+  				&& cache.deleteProperty(target, property, previous)
+  			) {
+  				handleChangeOnTarget(target, property, undefined, previous);
 
-          return true;
-        }
+  				return true;
+  			}
 
-        return !isValid;
-      },
+  			return !isValid;
+  		},
 
-      apply(target, thisArg, argumentsList) {
-        const thisProxyTarget = thisArg[proxyTarget] || thisArg;
+  		apply(target, thisArg, argumentsList) {
+  			const thisProxyTarget = thisArg[proxyTarget] || thisArg;
 
-        if (cache.isUnsubscribed) {
-          return Reflect.apply(target, thisProxyTarget, argumentsList);
-        }
+  			if (cache.isUnsubscribed) {
+  				return Reflect.apply(target, thisProxyTarget, argumentsList);
+  			}
 
-        if (
-          (details === false ||
-            (details !== true && !details.includes(target.name))) &&
-          SmartClone.isHandledType(thisProxyTarget)
-        ) {
-          let applyPath = path.initial(cache.getPath(target));
-          const isHandledMethod = SmartClone.isHandledMethod(
-            thisProxyTarget,
-            target.name
-          );
+  			if (
+  				(details === false
+  					|| (details !== true && !details.includes(target.name)))
+  				&& SmartClone.isHandledType(thisProxyTarget)
+  			) {
+  				let applyPath = path.initial(cache.getPath(target));
+  				const isHandledMethod = SmartClone.isHandledMethod(thisProxyTarget, target.name);
 
-          smartClone.start(thisProxyTarget, applyPath, argumentsList);
+  				smartClone.start(thisProxyTarget, applyPath, argumentsList);
 
-          let result = Reflect.apply(
-            target,
-            smartClone.preferredThisArg(target, thisArg, thisProxyTarget),
-            isHandledMethod
-              ? argumentsList.map((argument) => getProxyTarget(argument))
-              : argumentsList
-          );
+  				let result = Reflect.apply(
+  					target,
+  					smartClone.preferredThisArg(target, thisArg, thisProxyTarget),
+  					isHandledMethod
+  						? argumentsList.map(argument => getProxyTarget(argument))
+  						: argumentsList,
+  				);
 
-          const isChanged = smartClone.isChanged(thisProxyTarget, equals);
-          const previous = smartClone.stop();
+  				const isChanged = smartClone.isChanged(thisProxyTarget, equals);
+  				const previous = smartClone.stop();
 
-          if (SmartClone.isHandledType(result) && isHandledMethod) {
-            if (thisArg instanceof Map && target.name === "get") {
-              applyPath = path.concat(applyPath, argumentsList[0]);
-            }
+  				if (SmartClone.isHandledType(result) && isHandledMethod) {
+  					if (thisArg instanceof Map && target.name === 'get') {
+  						applyPath = path.concat(applyPath, argumentsList[0]);
+  					}
 
-            result = cache.getProxy(result, applyPath, handler);
-          }
+  					result = cache.getProxy(result, applyPath, handler);
+  				}
 
-          if (isChanged) {
-            const applyData = {
-              name: target.name,
-              args: argumentsList,
-              result,
-            };
-            const changePath = smartClone.isCloning
-              ? path.initial(applyPath)
-              : applyPath;
-            const property = smartClone.isCloning ? path.last(applyPath) : "";
+  				if (isChanged) {
+  					const applyData = {
+  						name: target.name,
+  						args: argumentsList,
+  						result,
+  					};
+  					const changePath = smartClone.isCloning
+  						? path.initial(applyPath)
+  						: applyPath;
+  					const property = smartClone.isCloning
+  						? path.last(applyPath)
+  						: '';
 
-            if (
-              validate(
-                path.get(object, changePath),
-                property,
-                thisProxyTarget,
-                previous,
-                applyData
-              )
-            ) {
-              handleChange(
-                changePath,
-                property,
-                thisProxyTarget,
-                previous,
-                applyData
-              );
-            } else {
-              smartClone.undo(thisProxyTarget);
-            }
-          }
+  					if (validate(path.get(object, changePath), property, thisProxyTarget, previous, applyData)) {
+  						handleChange(changePath, property, thisProxyTarget, previous, applyData);
+  					} else {
+  						smartClone.undo(thisProxyTarget);
+  					}
+  				}
 
-          if (
-            (thisArg instanceof Map || thisArg instanceof Set) &&
-            isIterator(result)
-          ) {
-            return wrapIterator(
-              result,
-              target,
-              thisArg,
-              applyPath,
-              prepareValue
-            );
-          }
+  				if (
+  					(thisArg instanceof Map || thisArg instanceof Set)
+  					&& isIterator(result)
+  				) {
+  					return wrapIterator(result, target, thisArg, applyPath, prepareValue);
+  				}
 
-          return result;
-        }
+  				return result;
+  			}
 
-        return Reflect.apply(target, thisArg, argumentsList);
-      },
-    };
+  			return Reflect.apply(target, thisArg, argumentsList);
+  		},
+  	};
 
-    const proxy = cache.getProxy(
-      object,
-      options.pathAsArray ? [] : "",
-      handler
-    );
-    onChange = onChange.bind(proxy);
+  	const proxy = cache.getProxy(object, options.pathAsArray ? [] : '', handler);
+  	onChange = onChange.bind(proxy);
 
-    if (hasOnValidate) {
-      options.onValidate = options.onValidate.bind(proxy);
-    }
+  	if (hasOnValidate) {
+  		options.onValidate = options.onValidate.bind(proxy);
+  	}
 
-    return proxy;
+  	return proxy;
   };
 
-  onChange.target = (proxy) => (proxy && proxy[TARGET]) || proxy;
-  onChange.unsubscribe = (proxy) => proxy[UNSUBSCRIBE] || proxy;
+  onChange.target = proxy => (proxy && proxy[TARGET]) || proxy;
+  onChange.unsubscribe = proxy => proxy[UNSUBSCRIBE] || proxy;
 
   class DivComponent {
     constructor() {
@@ -1088,7 +1042,7 @@
                 <img src="../../../static/search.svg" alt="search">
                 Find a book
             </a>
-            <a class="menu__item" href="#">
+            <a class="menu__item" href="#favorites">
                 <img src="../../../static/favorites.svg" alt="current">
                 Selected
                 <div class="menu__counter">${this.appState.favorites.length}</div>
@@ -1148,6 +1102,16 @@
       this.cardState = cardState;
     }
 
+    #addToFavorites() {
+      this.appState.favorites.push(this.cardState);
+    }
+
+    #deleteFromFavorites() {
+      this.appState.favorites = this.appState.favorites.filter(
+        (book) => book.key !== this.cardState.key
+      );
+    }
+
     render() {
       this.el.classList.add("card");
       const isExistInFavorites = this.appState.favorites.find(
@@ -1194,6 +1158,16 @@
         </div>
     `;
 
+      if (isExistInFavorites) {
+        this.el
+          .querySelector("button")
+          .addEventListener("click", this.#deleteFromFavorites.bind(this));
+      } else {
+        this.el
+          .querySelector("button")
+          .addEventListener("click", this.#addToFavorites.bind(this));
+      }
+
       return this.el;
     }
   }
@@ -1213,13 +1187,12 @@
         return this.el;
       }
 
-      this.el.classList.add("card_list");
-      this.el.innerHTML = `
-        <h1>We found ${this.parentState.numFound} books <h1>
-    `;
+      const cardsContainer = document.createElement("div");
+      cardsContainer.classList.add("card__container");
+      this.el.append(cardsContainer);
 
       for (const card of this.parentState.list) {
-        this.el.append(new Card(this.appState, card).render());
+        cardsContainer.append(new Card(this.appState, card).render());
       }
 
       return this.el;
@@ -1244,9 +1217,14 @@
       this.setTitle("Book search");
     }
 
+    destroy() {
+      onChange.unsubscribe(this.appState);
+      onChange.unsubscribe(this.state);
+    }
+
     appStateHook(path) {
       if (path === "favorites") {
-        console.log("favorites");
+        this.render();
       }
     }
 
@@ -1277,8 +1255,45 @@
 
     render() {
       const main = document.createElement("div");
+      main.innerHTML = `
+        <h1>We found ${this.state.numFound} books </h1>
+    `;
       main.append(new Search(this.state).render());
       main.append(new CardList(this.appState, this.state).render());
+      this.app.innerHTML = "";
+      this.app.append(main);
+      this.renderHeader();
+    }
+
+    renderHeader() {
+      const header = new Header(this.appState).render();
+      this.app.prepend(header);
+    }
+  }
+
+  class FavoriteView extends AbstractView {
+    constructor(appState) {
+      super();
+
+      this.appState = appState;
+      this.appState = onChange(this.appState, this.appStateHook.bind(this));
+      this.setTitle("My books");
+    }
+
+    appStateHook(path) {
+      if (path === "favorites") {
+        this.render();
+      }
+    }
+
+    render() {
+      const main = document.createElement("div");
+      main.innerHTML = `
+        <h1>Favorites</h1>
+    `;
+      main.append(
+        new CardList(this.appState, { list: this.appState.favorites }).render()
+      );
       this.app.innerHTML = "";
       this.app.append(main);
       this.renderHeader();
@@ -1295,6 +1310,10 @@
       {
         path: "",
         view: MainView,
+      },
+      {
+        path: "#favorites",
+        view: FavoriteView,
       },
     ];
     appState = {
@@ -1318,4 +1337,5 @@
   }
 
   new App();
+
 })();

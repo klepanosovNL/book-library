@@ -17,7 +17,7 @@ export class Header extends DivComponent {
                 <img src="../../../static/search.svg" alt="search">
                 Find a book
             </a>
-            <a class="menu__item" href="#">
+            <a class="menu__item" href="#favorites">
                 <img src="../../../static/favorites.svg" alt="current">
                 Selected
                 <div class="menu__counter">${this.appState.favorites.length}</div>
